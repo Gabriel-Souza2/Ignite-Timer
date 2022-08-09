@@ -1,4 +1,6 @@
 import { useForm } from 'react-hook-form'
+import { yupResolver } from '@hookform/resolvers/yup'
+import * as yup from 'yup'
 
 import { Play } from 'phosphor-react'
 import {
@@ -11,10 +13,20 @@ import {
   AmountInput,
 } from './styles'
 
-export function Home() {
-  const { register, handleSubmit, watch } = useForm()
+const newCycleValidationSchema = yup.object({
+  task: yup.string().required('Informe a tarefa'),
+  minutesAmount: yup
+    .number()
+    .min(5, 'O ciclo precisa ser de no minimo 5 min')
+    .max(60, 'O ciclo precisa ser de no maximo 60 min'),
+})
 
-  function handleCreateNewCicle(data: any) {
+export function Home() {
+  const { register, handleSubmit, watch } = useForm({
+    resolver: yupResolver(newCycleValidationSchema),
+  })
+
+  function handleCreateNewCycle(data: any) {
     console.log(data)
   }
 
@@ -23,7 +35,7 @@ export function Home() {
 
   return (
     <HomeContainer>
-      <form onSubmit={handleSubmit(handleCreateNewCicle)}>
+      <form onSubmit={handleSubmit(handleCreateNewCycle)}>
         <FormContainer>
           <label htmlFor="task">Vou trabalhar em </label>
           <TaskInput
