@@ -1,3 +1,4 @@
+import { produce } from 'immer'
 import { ActionTypes } from './actions'
 
 export interface Cycle {
@@ -17,36 +18,39 @@ interface CycleStateReducer {
 export function cyclesReducer(state: CycleStateReducer, action: any) {
   switch (action.type) {
     case ActionTypes.ADD_NEW_CICLE:
-      return {
-        ...state,
-        cycles: [...state.cycles, action.payload.newCycle],
-        activeCycleId: action.payload.newCycle.id,
-      }
+      return produce(state, (draft) => {
+        draft.cycles.push(action.payload.newCycle)
+        draft.activeCycleId = action.payload.newCycle.id
+      })
 
-    case ActionTypes.MARKED_CURRENT_CYCLE_AS_FINISHED:
-      return {
-        ...state,
-        cycles: state.cycles.map((cycle) => {
-          if (cycle.id === state.activeCycleId) {
-            return { ...cycle, finishedDate: new Date() }
-          } else {
-            return cycle
-          }
-        }),
-        activeCycleId: null,
+    case ActionTypes.MARKED_CURRENT_CYCLE_AS_FINISHED: {
+      const currentCycleIndex = state.cycles.findIndex((cycle) => {
+        return cycle.id === state.activeCycleId
+      })
+
+      if (currentCycleIndex < 0) {
+        return state
       }
-    case ActionTypes.INTERRUPTED_ACTIVE_CYCLE:
-      return {
-        ...state,
-        cycles: state.cycles.map((cycle) => {
-          if (cycle.id === state.activeCycleId) {
-            return { ...cycle, interruptedDate: new Date() }
-          } else {
-            return cycle
-          }
-        }),
-        activeCycleId: null,
+      return produce(state, (draft) => {
+        state.activeCycleId = null
+        state.cycles[currentCycleIndex].finishedDate = new Date()
+      })
+    }
+
+    case ActionTypes.INTERRUPTED_ACTIVE_CYCLE: {
+      const currentCycleIndex = state.cycles.findIndex((cycle) => {
+        return cycle.id === state.activeCycleId
+      })
+
+      if (currentCycleIndex < 0) {
+        return state
       }
+      return produce(state, (draft) => {
+        state.activeCycleId = null
+        state.cycles[currentCycleIndex].interruptedDate = new Date()
+      })
+    }
+
     default:
       return state
   }
